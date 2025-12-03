@@ -15,7 +15,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [dsfaData, setDsfaData] = useState<DSFAData | null>(null)
   const [riskResult, setRiskResult] = useState<RiskResult | null>(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   if (!isAuthenticated) {
     return (
@@ -58,7 +58,7 @@ export default function Home() {
               onSubmit={(data) => {
                 setDsfaData(data)
                 // Calculate risk assessment
-                const result = calculateRiskAssessment(data)
+                const result = calculateRiskAssessment(data, language)
                 setRiskResult(result)
               }}
             />
@@ -77,4 +77,3 @@ export default function Home() {
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { DSFAData, RiskResult } from '@/lib/dsfa'
 import { useLanguage } from './LanguageProvider'
 import { exportToPDF } from '@/lib/pdfExport'
@@ -17,10 +17,13 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
   const { language } = useLanguage()
   const [isExporting, setIsExporting] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const hasSavedRef = useRef(false)
 
   useEffect(() => {
     // Auto-save assessment
-    const assessmentId = saveAssessment(data, result)
+    if (hasSavedRef.current) return
+    saveAssessment(data, result)
+    hasSavedRef.current = true
     setIsSaved(true)
   }, [data, result])
 
@@ -313,4 +316,3 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
     </div>
   )
 }
-
