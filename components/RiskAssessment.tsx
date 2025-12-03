@@ -17,6 +17,9 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
   const { language } = useLanguage()
   const [isExporting, setIsExporting] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
   const hasSavedRef = useRef(false)
 
   useEffect(() => {
@@ -56,7 +59,11 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       integrity: 'Integrität',
       availability: 'Verfügbarkeit',
       transparency: 'Transparenz',
-      lawfulness: 'Rechtmässigkeit'
+      lawfulness: 'Rechtmässigkeit',
+      aiSummary: 'KI-Zusammenfassung',
+      aiGenerate: 'KI-Zusammenfassung erstellen',
+      aiLoading: 'Erstelle...',
+      aiError: 'KI-Zusammenfassung konnte nicht erstellt werden'
     },
     en: {
       title: 'Risk Assessment',
@@ -86,7 +93,11 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       integrity: 'Integrity',
       availability: 'Availability',
       transparency: 'Transparency',
-      lawfulness: 'Lawfulness'
+      lawfulness: 'Lawfulness',
+      aiSummary: 'AI Summary',
+      aiGenerate: 'Generate AI summary',
+      aiLoading: 'Generating...',
+      aiError: 'AI summary could not be generated'
     }
   }
 
@@ -112,6 +123,85 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       lawfulness: { de: t.lawfulness, en: t.lawfulness }
     }
     return categoryMap[category]?.[language] || category
+  }
+
+  const handleGenerateAI = async () => {
+    setAiLoading(true)
+    setAiError(null)
+    setAiSummary(null)
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, result, language })
+      })
+      if (!response.ok) {
+        throw new Error('Request failed')
+      }
+      const json = await response.json()
+      setAiSummary(json.summary || '')
+    } catch (error) {
+      console.error('AI generate error', error)
+      setAiError(t.aiError)
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+
+  const renderAiSummary = (summary: string) => {
+    const lines = summary.split('\n').map((line) => line.trim()).filter(Boolean)
+    const html: string[] = []
+    let inUl = false
+    let inOl = false
+
+    const closeLists = () => {
+      if (inUl) {
+        html.push('</ul>')
+        inUl = false
+      }
+      if (inOl) {
+        html.push('</ol>')
+        inOl = false
+      }
+    }
+
+    lines.forEach((line) => {
+      const bolded = escapeHtml(line).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      if (line.match(/^\d+\.\s+/)) {
+        if (inUl) {
+          html.push('</ul>')
+          inUl = false
+        }
+        if (!inOl) {
+          html.push('<ol class="list-decimal ml-5 space-y-1">')
+          inOl = true
+        }
+        html.push(`<li>${bolded.replace(/^\d+\.\s+/, '')}</li>`)
+      } else if (line.startsWith('- ')) {
+        if (inOl) {
+          html.push('</ol>')
+          inOl = false
+        }
+        if (!inUl) {
+          html.push('<ul class="list-disc ml-5 space-y-1">')
+          inUl = true
+        }
+        html.push(`<li>${bolded.replace(/^- /, '')}</li>`)
+      } else {
+        closeLists()
+        html.push(`<p class="font-semibold mb-1">${bolded}</p>`)
+      }
+    })
+    closeLists()
+    return html.join('')
   }
 
   const handleExportPDF = async () => {
@@ -214,6 +304,34 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
             </div>
           )}
         </div>
+      </div>
+
+      {/* AI Summary */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <h3 className="text-xl font-bold text-gray-900">{t.aiSummary}</h3>
+          <button
+            onClick={handleGenerateAI}
+            disabled={aiLoading}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {aiLoading ? t.aiLoading : t.aiGenerate}
+          </button>
+        </div>
+        {aiError && <p className="text-sm text-red-600">{aiError}</p>}
+        {aiSummary && (
+          <div
+            className="mt-2 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-indigo-900 space-y-2"
+            dangerouslySetInnerHTML={{ __html: renderAiSummary(aiSummary) }}
+          />
+        )}
+        {!aiSummary && !aiLoading && !aiError && (
+          <p className="text-sm text-gray-600">
+            {language === 'de'
+              ? 'Erstelle eine KI-Zusammenfassung der aktuellen Bewertung.'
+              : 'Generate an AI summary of the current assessment.'}
+          </p>
+        )}
       </div>
 
       {/* Risks */}
