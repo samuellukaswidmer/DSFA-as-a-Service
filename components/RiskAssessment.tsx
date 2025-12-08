@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import type { DSFAData, RiskResult } from '@/lib/dsfa'
 import { useLanguage } from './LanguageProvider'
-import { exportToPDF } from '@/lib/pdfExport'
-import { saveAssessment, exportAssessmentToJSON } from '@/lib/storage'
+import { exportToPDF, exportFullToPDF } from '@/lib/pdfExport'
+import { saveAssessment, exportAssessmentToJSON, exportFullAssessmentToJSON } from '@/lib/storage'
 import { LegalText } from './LegalText'
 
 interface RiskAssessmentProps {
@@ -46,10 +46,11 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       severity: 'Schweregrad',
       mitigation: 'Massnahmen',
       priority: 'Priorität',
-      legalBasis: 'Rechtsgrundlage',
       newAssessment: 'Neue Beurteilung',
       export: 'Als PDF exportieren',
+      exportFull: 'Vollständiges PDF',
       exportJSON: 'Als JSON exportieren',
+      exportFullJSON: 'Vollständiges JSON',
       saved: 'Gespeichert',
       exporting: 'Exportiere...',
       low: 'Niedrig',
@@ -80,10 +81,11 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       severity: 'Severity',
       mitigation: 'Mitigation Measures',
       priority: 'Priority',
-      legalBasis: 'Legal Basis',
       newAssessment: 'New Assessment',
       export: 'Export as PDF',
+      exportFull: 'Full PDF',
       exportJSON: 'Export as JSON',
+      exportFullJSON: 'Full JSON',
       saved: 'Saved',
       exporting: 'Exporting...',
       low: 'Low',
@@ -216,6 +218,18 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
     }
   }
 
+  const handleExportFullPDF = async () => {
+    setIsExporting(true)
+    try {
+      await exportFullToPDF(data, result, language)
+    } catch (error) {
+      console.error('Error exporting full PDF:', error)
+      alert(language === 'de' ? 'Fehler beim Exportieren der vollständigen PDF' : 'Error exporting full PDF')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handleExportJSON = () => {
     const assessment = {
       id: `dsfa_${Date.now()}`,
@@ -229,6 +243,25 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
     const a = document.createElement('a')
     a.href = url
     a.download = `DSFA_${data.projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportFullJSON = () => {
+    const assessment = {
+      id: `dsfa_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      data,
+      result,
+    }
+    const json = exportFullAssessmentToJSON(assessment)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `DSFA_full_${data.projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -280,6 +313,19 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
               >
                 {t.exportJSON}
+              </button>
+              <button
+                onClick={handleExportFullPDF}
+                disabled={isExporting}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isExporting ? t.exporting : t.exportFull}
+              </button>
+              <button
+                onClick={handleExportFullJSON}
+                className="px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors"
+              >
+                {t.exportFullJSON}
               </button>
             </div>
           </div>
@@ -390,9 +436,6 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
                   </span>
                 </div>
                 <p className="text-gray-700 mb-2">{rec.description}</p>
-                {rec.legalBasis && (
-                  <p className="text-sm text-gray-600 italic">{t.legalBasis}: {rec.legalBasis}</p>
-                )}
               </div>
             ))}
           </div>
@@ -422,12 +465,6 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
               {language === 'de' ? 'Datenvolumen' : 'Data Volume'}:
             </span>
             <span className="ml-2 text-gray-600">{t[data.dataVolume]}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-gray-700">
-              {language === 'de' ? 'Rechtsgrundlage' : 'Legal Basis'}:
-            </span>
-            <span className="ml-2 text-gray-600">{data.legalBasis}</span>
           </div>
         </div>
       </div>

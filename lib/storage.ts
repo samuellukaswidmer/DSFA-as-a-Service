@@ -52,6 +52,17 @@ export function exportAssessmentToJSON(assessment: SavedAssessment): string {
   return JSON.stringify(assessment, null, 2)
 }
 
+export function exportFullAssessmentToJSON(assessment: SavedAssessment): string {
+  const derived = {
+    art22GreenLight: assessment.result.complianceStatus.art22,
+    riskDrivers: assessment.result.risks.map((r) => r.description),
+    highRiskNotice: assessment.result.overallRisk === 'high'
+      ? 'High risk detected: consider consulting authorities, adding safeguards, or reassessing.'
+      : undefined,
+  }
+  return JSON.stringify({ ...assessment, derived }, null, 2)
+}
+
 export function importAssessmentFromJSON(json: string): SavedAssessment | null {
   try {
     const assessment = JSON.parse(json) as SavedAssessment
@@ -64,4 +75,3 @@ export function importAssessmentFromJSON(json: string): SavedAssessment | null {
     return null
   }
 }
-

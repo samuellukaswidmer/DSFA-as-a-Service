@@ -32,8 +32,9 @@ export function DSFAForm({ onSubmit }: DSFAFormProps) {
         : data.dataSubjects || [],
       dataVolume: data.dataVolume,
       dataRetention: data.dataRetention,
+      outsourcingCountries: data.outsourcingCountries,
+      thirdCountryRiskNotes: data.thirdCountryRiskNotes,
       processingPurpose: data.processingPurpose,
-      legalBasis: data.legalBasis,
       dataSharing: data.dataSharing === 'true' || data.dataSharing === true,
       dataSharingDetails: data.dataSharingDetails,
       thirdCountryTransfer: data.thirdCountryTransfer === 'true' || data.thirdCountryTransfer === true,
@@ -84,8 +85,9 @@ export function DSFAForm({ onSubmit }: DSFAFormProps) {
       dataSubjects: 'Betroffene Personengruppen',
       dataVolume: 'Datenvolumen',
       dataRetention: 'Aufbewahrungsdauer',
+      outsourcingCountries: 'Outsourcing-Länder (mit kurzer Risikoeinschätzung)',
+      thirdCountryRiskNotes: 'Risikobewertung für Drittstaaten (Art. 16 DSG)',
       processingPurpose: 'Verarbeitungszweck',
-      legalBasis: 'Rechtsgrundlage',
       dataSharing: 'Datenweitergabe an Dritte',
       thirdCountryTransfer: 'Datenübermittlung in Drittstaaten',
       encryption: 'Verschlüsselung',
@@ -121,8 +123,9 @@ export function DSFAForm({ onSubmit }: DSFAFormProps) {
       dataSubjects: 'Data Subject Groups',
       dataVolume: 'Data Volume',
       dataRetention: 'Retention Period',
+      outsourcingCountries: 'Outsourcing countries (with short risk note)',
+      thirdCountryRiskNotes: 'Third-country risk assessment (Art. 16 DPA)',
       processingPurpose: 'Processing Purpose',
-      legalBasis: 'Legal Basis',
       dataSharing: 'Data Sharing with Third Parties',
       thirdCountryTransfer: 'Third Country Transfer',
       encryption: 'Encryption',
@@ -293,11 +296,11 @@ export function DSFAForm({ onSubmit }: DSFAFormProps) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t.legalBasis} *
+                {t.outsourcingCountries}
               </label>
               <input
-                {...register('legalBasis', { required: true })}
-                placeholder={language === 'de' ? 'z.B. Art. 6 Abs. 1 lit. a DSG' : 'e.g. Art. 6 para. 1 lit. a DPA'}
+                {...register('outsourcingCountries')}
+                placeholder={language === 'de' ? 'z.B. EU (niedrig), USA (hoch)' : 'e.g. EU (low), US (high)'}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -363,12 +366,20 @@ export function DSFAForm({ onSubmit }: DSFAFormProps) {
                 </label>
               </div>
               {(formData.thirdCountryTransfer === 'true' || formData.thirdCountryTransfer === true) && (
-                <textarea
-                  {...register('thirdCountryDetails')}
-                  rows={2}
-                  placeholder={language === 'de' ? 'Details zur Drittstaat-Übermittlung' : 'Details on third country transfer'}
-                  className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                <div className="space-y-2 mt-2">
+                  <textarea
+                    {...register('thirdCountryDetails')}
+                    rows={2}
+                    placeholder={language === 'de' ? 'Details zur Drittstaat-Übermittlung' : 'Details on third country transfer'}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <textarea
+                    {...register('thirdCountryRiskNotes')}
+                    rows={2}
+                    placeholder={language === 'de' ? 'Risikoeinstufung pro Land (z.B. EU: niedrig, USA: hoch)' : 'Risk per country (e.g., EU: low, US: high)'}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -528,4 +539,3 @@ export function DSFAForm({ onSubmit }: DSFAFormProps) {
     </form>
   )
 }
-

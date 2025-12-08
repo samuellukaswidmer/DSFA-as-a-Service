@@ -12,10 +12,11 @@ export interface DSFAData {
   dataSubjects: string[]
   dataVolume: 'low' | 'medium' | 'high'
   dataRetention: string
+  outsourcingCountries?: string
+  thirdCountryRiskNotes?: string
   
   // Processing Characteristics
   processingPurpose: string
-  legalBasis: string
   dataSharing: boolean
   dataSharingDetails?: string
   thirdCountryTransfer: boolean
