@@ -7,8 +7,7 @@ interface AISummaryParams {
 }
 
 export async function generateAISummary({ data, result, language }: AISummaryParams): Promise<string> {
-  //const apiKey = process.env.OPENAI_API_KEY -->TODO uncomment this before pushing
-  const apiKey = "YOUR API KEY HERE";
+  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not set')
   }

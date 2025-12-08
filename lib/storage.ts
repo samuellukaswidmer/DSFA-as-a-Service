@@ -52,7 +52,7 @@ export function exportAssessmentToJSON(assessment: SavedAssessment): string {
   return JSON.stringify(assessment, null, 2)
 }
 
-export function exportFullAssessmentToJSON(assessment: SavedAssessment): string {
+export function exportFullAssessmentToJSON(assessment: SavedAssessment & { aiSummary?: string }): string {
   const derived = {
     art22GreenLight: assessment.result.complianceStatus.art22,
     riskDrivers: assessment.result.risks.map((r) => r.description),
@@ -60,7 +60,11 @@ export function exportFullAssessmentToJSON(assessment: SavedAssessment): string 
       ? 'High risk detected: consider consulting authorities, adding safeguards, or reassessing.'
       : undefined,
   }
-  return JSON.stringify({ ...assessment, derived }, null, 2)
+  const exportData: any = { ...assessment, derived }
+  if (assessment.aiSummary) {
+    exportData.aiSummary = assessment.aiSummary
+  }
+  return JSON.stringify(exportData, null, 2)
 }
 
 export function importAssessmentFromJSON(json: string): SavedAssessment | null {

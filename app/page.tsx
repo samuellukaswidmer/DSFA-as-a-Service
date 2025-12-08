@@ -9,12 +9,13 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { AssessmentHistory } from '@/components/AssessmentHistory'
 import { JSONImport } from '@/components/JSONImport'
 import type { DSFAData, RiskResult } from '@/lib/dsfa'
-import { calculateRiskAssessment } from '@/lib/dsfa'
+import { calculateRiskAssessment, calculateRiskAssessmentWithAI } from '@/lib/dsfa'
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [dsfaData, setDsfaData] = useState<DSFAData | null>(null)
   const [riskResult, setRiskResult] = useState<RiskResult | null>(null)
+  const [isCalculating, setIsCalculating] = useState(false)
   const { t, language } = useLanguage()
 
   if (!isAuthenticated) {
@@ -55,13 +56,50 @@ export default function Home() {
               }}
             />
             <DSFAForm 
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 setDsfaData(data)
-                // Calculate risk assessment
-                const result = calculateRiskAssessment(data, language)
-                setRiskResult(result)
+                setIsCalculating(true)
+                
+                try {
+                  // Try AI-powered assessment first
+                  const aiResult = await calculateRiskAssessmentWithAI(data, language)
+                  
+                  if (aiResult) {
+                    // Use AI result if available
+                    setRiskResult(aiResult)
+                  } else {
+                    // Fallback to regular assessment
+                    const result = calculateRiskAssessment(data, language)
+                    setRiskResult(result)
+                  }
+                } catch (error) {
+                  console.error('Error calculating risk assessment:', error)
+                  // Fallback to regular assessment on error
+                  const result = calculateRiskAssessment(data, language)
+                  setRiskResult(result)
+                } finally {
+                  setIsCalculating(false)
+                }
               }}
             />
+            
+            {isCalculating && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+                  <div className="flex items-center gap-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {language === 'de' ? 'Risikoeinschätzung wird berechnet...' : 'Calculating risk assessment...'}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {language === 'de' ? 'ChatGPT analysiert die Daten...' : 'ChatGPT is analyzing the data...'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <RiskAssessment 

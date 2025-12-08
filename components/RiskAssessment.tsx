@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import type { DSFAData, RiskResult } from '@/lib/dsfa'
 import { useLanguage } from './LanguageProvider'
-import { exportToPDF, exportFullToPDF } from '@/lib/pdfExport'
-import { saveAssessment, exportAssessmentToJSON, exportFullAssessmentToJSON } from '@/lib/storage'
+import { exportFullToPDF } from '@/lib/pdfExport'
+import { saveAssessment, exportFullAssessmentToJSON } from '@/lib/storage'
 import { LegalText } from './LegalText'
+import { RiskSummary } from './RiskSummary'
 
 interface RiskAssessmentProps {
   data: DSFAData
@@ -48,9 +49,7 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       priority: 'Priorität',
       newAssessment: 'Neue Beurteilung',
       export: 'Als PDF exportieren',
-      exportFull: 'Vollständiges PDF',
       exportJSON: 'Als JSON exportieren',
-      exportFullJSON: 'Vollständiges JSON',
       saved: 'Gespeichert',
       exporting: 'Exportiere...',
       low: 'Niedrig',
@@ -83,9 +82,7 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       priority: 'Priority',
       newAssessment: 'New Assessment',
       export: 'Export as PDF',
-      exportFull: 'Full PDF',
       exportJSON: 'Export as JSON',
-      exportFullJSON: 'Full JSON',
       saved: 'Saved',
       exporting: 'Exporting...',
       low: 'Low',
@@ -209,22 +206,10 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
   const handleExportPDF = async () => {
     setIsExporting(true)
     try {
-      await exportToPDF(data, result, language)
+      await exportFullToPDF(data, result, language, aiSummary)
     } catch (error) {
       console.error('Error exporting PDF:', error)
       alert(language === 'de' ? 'Fehler beim Exportieren der PDF' : 'Error exporting PDF')
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const handleExportFullPDF = async () => {
-    setIsExporting(true)
-    try {
-      await exportFullToPDF(data, result, language)
-    } catch (error) {
-      console.error('Error exporting full PDF:', error)
-      alert(language === 'de' ? 'Fehler beim Exportieren der vollständigen PDF' : 'Error exporting full PDF')
     } finally {
       setIsExporting(false)
     }
@@ -236,32 +221,14 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       timestamp: new Date().toISOString(),
       data,
       result,
-    }
-    const json = exportAssessmentToJSON(assessment)
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `DSFA_${data.projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
-  const handleExportFullJSON = () => {
-    const assessment = {
-      id: `dsfa_${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      data,
-      result,
+      aiSummary: aiSummary || undefined,
     }
     const json = exportFullAssessmentToJSON(assessment)
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `DSFA_full_${data.projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`
+    a.download = `DSFA_${data.projectName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -314,23 +281,13 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
               >
                 {t.exportJSON}
               </button>
-              <button
-                onClick={handleExportFullPDF}
-                disabled={isExporting}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isExporting ? t.exporting : t.exportFull}
-              </button>
-              <button
-                onClick={handleExportFullJSON}
-                className="px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors"
-              >
-                {t.exportFullJSON}
-              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Risk Summary - What are the risks and missing measures */}
+      <RiskSummary result={result} />
 
       {/* Compliance Status */}
       <div className="bg-white rounded-xl shadow-lg p-6">
@@ -384,12 +341,29 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
       {result.risks.length > 0 && (
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">{t.risks}</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            {language === 'de' 
+              ? `Es wurden ${result.risks.length} Risiken identifiziert. Jedes Risiko wird mit Wahrscheinlichkeit, Auswirkung und Schweregrad bewertet.`
+              : `${result.risks.length} risks were identified. Each risk is assessed with likelihood, impact, and severity.`}
+          </p>
           <div className="space-y-4">
             {result.risks.map((risk) => (
               <div key={risk.id} className="border-2 border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 mb-2">{risk.description}</h4>
+                    <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-600 mb-1">
+                        {language === 'de' 
+                          ? 'Warum ist das ein Risiko?'
+                          : 'Why is this a risk?'}
+                      </p>
+                      <p className="text-sm text-gray-800">
+                        {language === 'de'
+                          ? `Dieses Risiko betrifft das Schutzziel "${getCategoryLabel(risk.category)}". Die Wahrscheinlichkeit ist ${t[risk.likelihood]}, die Auswirkung ist ${t[risk.impact]}, was zu einem ${t[risk.severity]}en Schweregrad führt.`
+                          : `This risk affects the security objective "${getCategoryLabel(risk.category)}". The likelihood is ${t[risk.likelihood]}, the impact is ${t[risk.impact]}, resulting in ${t[risk.severity]} severity.`}
+                      </p>
+                    </div>
                     <div className="flex flex-wrap gap-2 text-sm">
                       <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
                         {t.category}: {getCategoryLabel(risk.category)}
@@ -401,14 +375,18 @@ export function RiskAssessment({ data, result, onNewAssessment }: RiskAssessment
                         {t.impact}: {t[risk.impact]}
                       </span>
                       <span className={`px-2 py-1 rounded border ${getRiskColor(risk.severity)}`}>
-                        {t.severity}: {t[risk.severity]}
+                        {t.severity}: {t[risk.severity]} ({t[risk.likelihood]} × {t[risk.impact]})
                       </span>
                     </div>
                   </div>
                 </div>
                 {risk.mitigation.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="font-medium text-gray-700 mb-2">{t.mitigation}:</p>
+                    <p className="font-medium text-gray-700 mb-2">
+                      {language === 'de' 
+                        ? 'Wie kann dieses Risiko reduziert werden?'
+                        : 'How can this risk be reduced?'}
+                    </p>
                     <ul className="list-disc list-inside space-y-1 text-gray-600">
                       {risk.mitigation.map((mitigation, index) => (
                         <li key={index}>{mitigation}</li>
