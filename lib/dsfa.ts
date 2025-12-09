@@ -230,7 +230,8 @@ export async function calculateRiskAssessmentWithAI(
   language: Language = 'de',
   apiKey?: string
 ): Promise<RiskResult | null> {
-  const key = apiKey || process.env.NEXT_PUBLIC_OPENAI_API_KEY
+  // Try both environment variable names for flexibility
+  const key = apiKey || process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY
   if (!key) {
     return null // Fallback to regular assessment
   }
