@@ -76,7 +76,7 @@ export function DecisionLog({ result }: DecisionLogProps) {
       {/* Statistics Overview - Only show if there are risks or missing measures */}
       {(hasRisks || hasMissingMeasures || hasHighSeverityRisks || hasMediumSeverityRisks) && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          {hasHighSeverityRisks > 0 && (
+          {hasHighSeverityRisks && (
             <div className="bg-red-50 rounded-lg p-3 border border-red-200">
               <p className="text-xs text-gray-600 mb-1">{t.highSeverityRisks}</p>
               <p className="text-2xl font-bold text-red-800">
@@ -84,7 +84,7 @@ export function DecisionLog({ result }: DecisionLogProps) {
               </p>
             </div>
           )}
-          {hasMediumSeverityRisks > 0 && (
+          {hasMediumSeverityRisks && (
             <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
               <p className="text-xs text-gray-600 mb-1">{t.mediumSeverityRisks}</p>
               <p className="text-2xl font-bold text-yellow-800">
