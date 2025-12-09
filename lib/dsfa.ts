@@ -230,7 +230,7 @@ export async function calculateRiskAssessmentWithAI(
   language: Language = 'de',
   apiKey?: string
 ): Promise<RiskResult | null> {
-  // Try both environment variable names for flexibility
+  // Use environment variable - set in Vercel dashboard or .env.local for local dev
   const key = apiKey || process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY
   if (!key) {
     return null // Fallback to regular assessment

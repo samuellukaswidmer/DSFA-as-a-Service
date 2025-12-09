@@ -7,10 +7,10 @@ interface AISummaryParams {
 }
 
 export async function generateAISummary({ data, result, language }: AISummaryParams): Promise<string> {
-  // Try both environment variable names for flexibility
-  const apiKey = "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";
+  // Use environment variable - set in Vercel dashboard or .env.local for local dev
+  const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY or NEXT_PUBLIC_OPENAI_API_KEY environment variable is not set')
+    throw new Error('OPENAI_API_KEY environment variable is not set')
   }
 
   const promptLanguage = language === 'de' ? 'German' : 'English'
