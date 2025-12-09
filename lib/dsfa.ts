@@ -1093,7 +1093,7 @@ export function calculateRiskAssessment(data: DSFAData, language: Language = 'de
   const riskExplanation = language === 'de'
     ? `Das Gesamtrisiko wurde als "${overallRisk === 'high' ? 'hoch' : overallRisk === 'medium' ? 'mittel' : 'niedrig'}" bewertet. ${riskDrivers.length > 0 ? `Hauptrisikotreiber sind: ${riskDrivers.join('; ')}. ` : ''}${risks.length > 0 ? `Es wurden ${risks.length} Risiken identifiziert, davon ${highSeverityRisks} mit hohem Schweregrad. ` : ''}${missingMeasuresList.length > 0 ? `Fehlende Schutzmassnahmen: ${missingMeasuresList.map(m => m.measure).join(', ')}. ` : ''}${overallRisk === 'high' ? 'Bei hohem Risiko müssen zusätzliche Massnahmen implementiert werden, bevor das Projekt starten kann.' : overallRisk === 'medium' ? 'Bei mittlerem Risiko werden zusätzliche Massnahmen empfohlen.' : 'Das Risikoniveau ist akzeptabel, Standardmassnahmen sind ausreichend.'}`
     : `The overall risk was assessed as "${overallRisk}". ${riskDrivers.length > 0 ? `Main risk drivers are: ${riskDrivers.join('; ')}. ` : ''}${risks.length > 0 ? `${risks.length} risks were identified, ${highSeverityRisks} with high severity. ` : ''}${missingMeasuresList.length > 0 ? `Missing security measures: ${missingMeasuresList.map(m => m.measure).join(', ')}. ` : ''}${overallRisk === 'high' ? 'With high risk, additional measures must be implemented before the project can start.' : overallRisk === 'medium' ? 'With medium risk, additional measures are recommended.' : 'The risk level is acceptable, standard measures are sufficient.'}`
-
+  
   return {
     overallRisk,
     risks,
@@ -1123,7 +1123,7 @@ export function calculateRiskAssessment(data: DSFAData, language: Language = 'de
       complianceDecision: {
         reasoning: complianceReasoning,
         checks: complianceChecks
-      }
     }
   }
+}
 }

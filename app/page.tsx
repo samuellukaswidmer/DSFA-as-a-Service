@@ -75,8 +75,8 @@ export default function Home() {
                 } catch (error) {
                   console.error('Error calculating risk assessment:', error)
                   // Fallback to regular assessment on error
-                  const result = calculateRiskAssessment(data, language)
-                  setRiskResult(result)
+                const result = calculateRiskAssessment(data, language)
+                setRiskResult(result)
                 } finally {
                   setIsCalculating(false)
                 }
