@@ -35,7 +35,7 @@ Risk result: ${JSON.stringify(result)}
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-chat-latest',
       messages: [
         {
           role: 'system',
@@ -48,7 +48,7 @@ Risk result: ${JSON.stringify(result)}
         }
       ],
       temperature: 0.4,
-      max_tokens: 300
+      max_tokens: 1000
     })
   })
 
